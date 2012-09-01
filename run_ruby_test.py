@@ -155,19 +155,30 @@ class BaseRubyTask(sublime_plugin.TextCommand):
       char_under_cursor = view.sel()[0].a
       return view.rowcol(char_under_cursor)[0] + 1
     def features(self): return []
+    def args(self, view = None):
+      project_root = self.find_project_root(RSPEC_UNIT_FOLDER)
+      args = {
+        'relative_path': self.absolute_path.partition(project_root + os.sep)[2],
+        'project_root': project_root,
+        'file_name': self.file_name,
+        'absolute_path': self.absolute_path
+        }
+      if view:
+        args['line_number'] = self.get_current_line_number(view)
+      return args
 
   class AnonymousFile(BaseFile):
     def __init__(self):
       True
 
   class RubyFile(BaseFile):
-    def verify_syntax_command(self): return RubyTestSettings().ruby_verify_command(file_name=self.file_name)
+    def verify_syntax_command(self): return RubyTestSettings().ruby_verify_command(**self.args())
     def possible_alternate_files(self): return [self.file_name.replace(".rb", "_spec.rb"), self.file_name.replace(".rb", "_test.rb"), self.file_name.replace(".rb", ".feature")]
     def features(self): return ["verify_syntax", "switch_to_test", "rails_generate", "extract_variable"]
 
   class UnitFile(RubyFile):
     def possible_alternate_files(self): return [self.file_name.replace("_test.rb", ".rb")]
-    def run_all_tests_command(self): return RubyTestSettings().run_ruby_unit_command(relative_path=self.relative_file_path(RUBY_UNIT_FOLDER))
+    def run_all_tests_command(self): return RubyTestSettings().run_ruby_unit_command(**self.args())
     def run_single_test_command(self, view):
       region = view.sel()[0]
       line_region = view.line(region)
@@ -184,20 +195,20 @@ class BaseRubyTask(sublime_plugin.TextCommand):
 
   class CucumberFile(BaseFile):
     def possible_alternate_files(self): return [self.file_name.replace(".feature", ".rb")]
-    def run_all_tests_command(self): return RubyTestSettings().run_cucumber_command(relative_path=self.relative_file_path(CUCUMBER_UNIT_FOLDER))
-    def run_single_test_command(self, view): return RubyTestSettings().run_single_cucumber_command(relative_path=self.relative_file_path(CUCUMBER_UNIT_FOLDER), line_number=self.get_current_line_number(view))
+    def run_all_tests_command(self): return RubyTestSettings().run_cucumber_command(**self.args())
+    def run_single_test_command(self, view): return RubyTestSettings().run_single_cucumber_command(**self.args(view))
     def features(self): return ["run_test"]
     def get_project_root(self): return self.find_project_root(CUCUMBER_UNIT_FOLDER)
 
   class RSpecFile(RubyFile):
     def possible_alternate_files(self): return [self.file_name.replace("_spec.rb", ".rb")]
-    def run_all_tests_command(self): return RubyTestSettings().run_rspec_command(relative_path=self.relative_file_path(RSPEC_UNIT_FOLDER))
-    def run_single_test_command(self, view): return RubyTestSettings().run_single_rspec_command(relative_path=self.relative_file_path(RSPEC_UNIT_FOLDER), line_number=self.get_current_line_number(view))
+    def run_all_tests_command(self): return RubyTestSettings().run_rspec_command(**self.args())
+    def run_single_test_command(self, view): return RubyTestSettings().run_single_rspec_command(**self.args(view))
     def features(self): return super(BaseRubyTask.RSpecFile, self).features() + ["run_test"]
     def get_project_root(self): return self.find_project_root(RSPEC_UNIT_FOLDER)
 
   class ErbFile(BaseFile):
-    def verify_syntax_command(self): return RubyTestSettings().erb_verify_command(file_name=self.file_name)
+    def verify_syntax_command(self): return RubyTestSettings().erb_verify_command(**self.args())
     def can_verify_syntax(self): return True
     def features(self): return ["verify_syntax"]
 
