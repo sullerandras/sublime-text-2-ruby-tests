@@ -207,6 +207,9 @@ class BaseRubyTask(sublime_plugin.TextCommand):
     def features(self): return super(BaseRubyTask.RSpecFile, self).features() + ["run_test"]
     def get_project_root(self): return self.find_project_root(RSPEC_UNIT_FOLDER)
 
+  class ViewTestFile(RSpecFile):
+    def possible_alternate_files(self): return [self.file_name.replace(".haml_spec.rb", ".haml")]
+
   class ErbFile(BaseFile):
     def verify_syntax_command(self): return RubyTestSettings().erb_verify_command(**self.args())
     def can_verify_syntax(self): return True
@@ -217,6 +220,8 @@ class BaseRubyTask(sublime_plugin.TextCommand):
     if not file_name: return BaseRubyTask.AnonymousFile()
     if re.search('\w+\_test.rb', file_name):
       return BaseRubyTask.UnitFile(file_name)
+    elif re.search('\w+\.haml\_spec.rb', file_name):
+      return BaseRubyTask.ViewTestFile(file_name)
     elif re.search('\w+\_spec.rb', file_name):
       return BaseRubyTask.RSpecFile(file_name)
     elif re.search('\w+\.feature', file_name):
