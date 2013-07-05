@@ -210,6 +210,9 @@ class BaseRubyTask(sublime_plugin.TextCommand):
   class ViewTestFile(RSpecFile):
     def possible_alternate_files(self): return [self.file_name.replace(".haml_spec.rb", ".haml")]
 
+  class ViewFile(RSpecFile):
+    def possible_alternate_files(self): return [self.file_name.replace(".haml", ".haml_spec.rb")]
+
   class ErbFile(BaseFile):
     def verify_syntax_command(self): return RubyTestSettings().erb_verify_command(**self.args())
     def can_verify_syntax(self): return True
@@ -222,6 +225,8 @@ class BaseRubyTask(sublime_plugin.TextCommand):
       return BaseRubyTask.UnitFile(file_name)
     elif re.search('\w+\.haml\_spec.rb', file_name):
       return BaseRubyTask.ViewTestFile(file_name)
+    elif re.search('\w+\.haml', file_name):
+      return BaseRubyTask.ViewFile(file_name)
     elif re.search('\w+\_spec.rb', file_name):
       return BaseRubyTask.RSpecFile(file_name)
     elif re.search('\w+\.feature', file_name):
