@@ -110,8 +110,11 @@ class BaseRubyTask(sublime_plugin.TextCommand):
 
   def save_test_run(self, command, working_dir):
     s = sublime.load_settings("RubyTest.last-run")
-    s.set("last_test_run", command)
-    s.set("last_test_working_dir", working_dir)
+    if s.get("last_test_run") != command or s.get("last_test_working_dir") != working_dir:
+      s.set("prev_test_run", s.get("last_test_run"))
+      s.set("prev_test_working_dir", s.get("last_test_working_dir"))
+      s.set("last_test_run", command)
+      s.set("last_test_working_dir", working_dir)
 
     sublime.save_settings("RubyTest.last-run")
 
@@ -268,6 +271,16 @@ class RunLastRubyTest(BaseRubyTask):
 
   def run(self, args):
     last_command, working_dir = self.load_last_run()
+    self.run_shell_command(last_command, working_dir)
+
+class RunPrevRubyTest(BaseRubyTask):
+  def load_prev_run(self):
+    self.load_config()
+    s = sublime.load_settings("RubyTest.last-run")
+    return (s.get("prev_test_run"), s.get("prev_test_working_dir"))
+
+  def run(self, args):
+    last_command, working_dir = self.load_prev_run()
     self.run_shell_command(last_command, working_dir)
 
 class VerifyRubyFile(BaseRubyTask):
