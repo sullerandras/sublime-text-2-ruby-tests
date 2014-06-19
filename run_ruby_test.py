@@ -221,6 +221,17 @@ class BaseRubyTask(sublime_plugin.TextCommand):
     def can_verify_syntax(self): return True
     def features(self): return ["verify_syntax"]
 
+  class CoffeeFile(RubyFile):
+    def possible_alternate_files(self): return [self.file_name.replace(".", "_spec.", 1)]
+    def features(self): return ["switch_to_test"]
+
+  class CoffeeSpecFile(RubyFile):
+    def possible_alternate_files(self): return [self.file_name.replace("_spec.", ".")]
+    def run_all_tests_command(self): return RubyTestSettings().run_rspec_command(**self.args())
+    def run_single_test_command(self, view): return RubyTestSettings().run_single_rspec_command(**self.args(view))
+    def features(self): return ["run_test", "switch_to_test"]
+    def get_project_root(self): return self.find_project_root(RSPEC_UNIT_FOLDER)
+
   def file_type(self, file_name = None):
     file_name = file_name or self.view.file_name()
     if not file_name: return BaseRubyTask.AnonymousFile()
@@ -238,6 +249,10 @@ class BaseRubyTask(sublime_plugin.TextCommand):
       return BaseRubyTask.RubyFile(file_name)
     elif re.search('\w+\.erb', file_name):
       return BaseRubyTask.ErbFile(file_name)
+    elif re.search('^.*_spec\..*coffee', file_name):
+      return BaseRubyTask.CoffeeSpecFile(file_name)
+    elif re.search('\w+\.coffee', file_name):
+      return BaseRubyTask.CoffeeFile(file_name)
     else:
       return BaseRubyTask.BaseFile(file_name)
 
